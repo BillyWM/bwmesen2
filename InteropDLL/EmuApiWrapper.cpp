@@ -344,15 +344,20 @@ extern "C" {
 			_emu->GetSettings()->SetFlag(EmulationFlags::MaximumSpeed);
 			_emu->LoadRom((VirtualFile)testRoms[i], VirtualFile());
 
+			bool dbgDataHold = false;
 			if(enableDebugger) {
-				//turn on debugger to profile the debugger's code too
+				//Turn on debugger to profile the debugger's code too
+				_emu->AcquireDebugData();
+				dbgDataHold = true;
 				_emu->GetDebugger(true);
 			}
 				
 			std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(5000));
 			std::cout << "Ran for " << _emu->GetFrameCount() << " frames" << std::endl;
-
 			_emu->Stop(false);
+			if(dbgDataHold) {
+				_emu->ReleaseDebugData();
+			}
 			_emu->Release();
 		}
 	}

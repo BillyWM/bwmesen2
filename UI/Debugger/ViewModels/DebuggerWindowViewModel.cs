@@ -78,10 +78,6 @@ namespace Mesen.Debugger.ViewModels
 
 		public DebuggerWindowViewModel(CpuType? cpuType)
 		{
-			if(!Design.IsDesignMode) {
-				DebugApi.InitializeDebugger();
-			}
-
 			ConsoleType consoleType;
 			if(Design.IsDesignMode) {
 				CpuType = CpuType.Snes;

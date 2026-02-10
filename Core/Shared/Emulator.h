@@ -102,6 +102,9 @@ private:
 	atomic<int> _debugRequestCount;
 	atomic<int> _blockDebuggerRequestCount;
 
+	atomic<int> _debugDataRefcount{0};
+	bool _consoleModeDebugDataHold = false;
+
 	atomic<bool> _isRunAheadFrame;
 	bool _frameRunning = false;
 
@@ -218,6 +221,11 @@ public:
 	void StopDebugger();
 	DebuggerRequest GetDebugger(bool autoInit = false);
 	bool IsDebugging() { return !!_debugger; }
+
+	void AcquireDebugData();
+	void ReleaseDebugData();
+	int GetDebugDataRefcount() const { return _debugDataRefcount.load(); }
+
 	Debugger* InternalGetDebugger() { return _debugger.get(); }
 
 	thread::id GetEmulationThreadId() { return _emulationThreadId; }

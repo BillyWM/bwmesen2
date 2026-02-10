@@ -30,6 +30,26 @@ extern unique_ptr<Emulator> _emu;
 template<typename T>
 T WrapDebuggerCall(std::function<T(Debugger* debugger)> func)
 {
+	//If this call would auto-initialize debugger data (no holders), acquire/release a temporary ref
+	struct ScopedDebugDataRef
+	{
+		bool _active = false;
+		ScopedDebugDataRef()
+		{
+			if(_emu->GetDebugDataRefcount() == 0) {
+				_emu->AcquireDebugData();
+				_active = true;
+			}
+		}
+		~ScopedDebugDataRef()
+		{
+			if(_active) {
+				_emu->ReleaseDebugData();
+			}
+		}
+	};
+	ScopedDebugDataRef scopedRef;
+
 	DebuggerRequest dbgRequest = _emu->GetDebugger(true);
 	if(dbgRequest.GetDebugger()) {
 		return func(dbgRequest.GetDebugger());
@@ -41,6 +61,26 @@ T WrapDebuggerCall(std::function<T(Debugger* debugger)> func)
 template<>
 void WrapDebuggerCall(std::function<void(Debugger* debugger)> func)
 {
+	//If this call would auto-initialize debugger data (no holders), acquire/release a temporary ref
+	struct ScopedDebugDataRef
+	{
+		bool _active = false;
+		ScopedDebugDataRef()
+		{
+			if(_emu->GetDebugDataRefcount() == 0) {
+				_emu->AcquireDebugData();
+				_active = true;
+			}
+		}
+		~ScopedDebugDataRef()
+		{
+			if(_active) {
+				_emu->ReleaseDebugData();
+			}
+		}
+	};
+	ScopedDebugDataRef scopedRef;
+
 	DebuggerRequest dbgRequest = _emu->GetDebugger(true);
 	if(dbgRequest.GetDebugger()) {
 		func(dbgRequest.GetDebugger());
@@ -56,12 +96,12 @@ extern "C"
 	//Debugger wrapper
 	DllExport void __stdcall InitializeDebugger()
 	{
-		_emu->InitDebugger();
+		_emu->AcquireDebugData();
 	}
 
 	DllExport void __stdcall ReleaseDebugger()
 	{
-		_emu->StopDebugger();
+		_emu->ReleaseDebugData();
 	}
 
 	DllExport bool __stdcall IsDebuggerRunning()

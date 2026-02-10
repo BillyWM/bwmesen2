@@ -105,6 +105,12 @@ void Emulator::Release()
 	_videoDecoder->StopThread();
 	_videoRenderer->StopThread();
 	_shortcutKeyHandler.reset();
+
+	//Ensure any internal debug-data hold (e.g. ConsoleMode) is released on shutdown
+	if(_consoleModeDebugDataHold) {
+		ReleaseDebugData();
+		_consoleModeDebugDataHold = false;
+	}
 }
 
 void Emulator::Run()
@@ -492,7 +498,17 @@ bool Emulator::InternalLoadRom(VirtualFile romFile, VirtualFile patchFile, bool 
 
 	_rewindManager->InitHistory();
 
-	if(debuggerActive || _settings->CheckFlag(EmulationFlags::ConsoleMode)) {
+	bool consoleMode = _settings->CheckFlag(EmulationFlags::ConsoleMode);
+	if(consoleMode && !_consoleModeDebugDataHold) {
+		//ConsoleMode forces debugger-backed data/tools to be available even without UI debug windows
+		AcquireDebugData();
+		_consoleModeDebugDataHold = true;
+	} else if(!consoleMode && _consoleModeDebugDataHold) {
+		ReleaseDebugData();
+		_consoleModeDebugDataHold = false;
+	}
+
+	if(debuggerActive || consoleMode) {
 		InitDebugger();
 	}
 
@@ -1090,6 +1106,28 @@ void Emulator::StopDebugger()
 		}
 	}
 }
+
+void Emulator::AcquireDebugData()
+{
+	int prev = _debugDataRefcount.fetch_add(1);
+	if(prev == 0) {
+		InitDebugger();
+	}
+}
+
+void Emulator::ReleaseDebugData()
+{
+	int prev = _debugDataRefcount.fetch_sub(1);
+	if(prev <= 0) {
+		//Avoid negative refcount if Release is called more times than Acquire
+		_debugDataRefcount.store(0);
+		return;
+	}
+	if(prev == 1) {
+		StopDebugger();
+	}
+}
+
 
 bool Emulator::IsEmulationThread()
 {

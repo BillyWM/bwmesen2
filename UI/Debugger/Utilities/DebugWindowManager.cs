@@ -21,7 +21,14 @@ namespace Mesen.Debugger.Utilities
 
 		public static T CreateDebugWindow<T>(Func<T> createWindow) where T : MesenWindow
 		{
-			if(Interlocked.Increment(ref _debugWindowCounter) == 1) {
+			bool firstWindow = Interlocked.Increment(ref _debugWindowCounter) == 1;
+
+			if(!Design.IsDesignMode) {
+				//Acquire a debug-data ref for this window
+				DebugApi.InitializeDebugger();
+			}
+
+			if(firstWindow) {
 				//Opened a debug window and nothing else was opened, load the saved workspace
 				DebugWorkspaceManager.Load();
 			}
@@ -77,12 +84,13 @@ namespace Mesen.Debugger.Utilities
 			//Remove window from list first, to ensure no more notifications are sent to it
 			_openedWindows.TryRemove(wnd, out _);
 
-			if(Interlocked.Decrement(ref _debugWindowCounter) == 0) {
-				//Closed the last debug window, save the workspace and turn off the debugger
+			bool isLastWindow = Interlocked.Decrement(ref _debugWindowCounter) == 0;
+			if(isLastWindow) {
+				//Closed the last debug window, save the workspace.
 				//Run any jobs pending on the UI thread, to ensure the debugger
-				//doesn't get restarted by a pending job from the window that was closed
+				//doesn't get restarted by a pending job from the window that was closed.
 				//Lock to prevent this from running while ProcessNotification is sending
-				//notifications out to the debug windows
+				//notifications out to the debug windows.
 				_windowNotifLock.EnterWriteLock();
 				try {
 					Dispatcher.UIThread.RunJobs();
@@ -90,6 +98,10 @@ namespace Mesen.Debugger.Utilities
 					_windowNotifLock.ExitWriteLock();
 				}
 				DebugWorkspaceManager.Save(true);
+			}
+
+			//Release the debug-data ref held by this window (after flushing UI jobs if this was the last one)
+			if(!Design.IsDesignMode) {
 				DebugApi.ReleaseDebugger();
 			}
 		}
