@@ -10,12 +10,12 @@ namespace Mesen.Utilities
 	{
 		public static Image FromAsset(string source)
 		{
-			return new Image() { Source = new Bitmap(AssetLoader.Open(new Uri("avares://Mesen/" + source))) };
+			return new Image() { Source = new Bitmap(AssetLoader.Open(new Uri("avares://Bwmesen/" + source))) };
 		}
 
 		public static Bitmap BitmapFromAsset(string source)
 		{
-			return new Bitmap(AssetLoader.Open(new Uri("avares://Mesen/" + source)));
+			return new Bitmap(AssetLoader.Open(new Uri("avares://Bwmesen/" + source)));
 		}
 	}
 }

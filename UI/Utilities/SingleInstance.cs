@@ -13,7 +13,7 @@ namespace Mesen.Utilities
 	{
 		public static SingleInstance Instance { get; private set; } = new SingleInstance();
 
-		private static Guid _identifier = new Guid("{A46696B7-2D1C-4CC5-A52F-43BCAF094AEF}");
+		private static Guid _identifier = new Guid("{894356C0-CA0B-40EE-B64A-3B1A59D0D97D}");
 
 		private Mutex? _mutex;
 		private FileStream? _lockFileStream;
