@@ -134,6 +134,33 @@ void Socket::Bind(uint16_t port)
 	}
 }
 
+void Socket::BindLoopback(uint16_t port)
+{
+	SOCKADDR_IN serverInf;
+	serverInf.sin_family = AF_INET;
+	serverInf.sin_port = htons(port);
+
+	// Bind only to 127.0.0.1 (loopback). Intentionally do NOT create a UPnP mapping.
+	#ifdef _WIN32
+		if(InetPtonA(AF_INET, "127.0.0.1", &serverInf.sin_addr) != 1) {
+			std::cout << "Unable to parse loopback address." << std::endl;
+			SetConnectionErrorFlag();
+			return;
+		}
+	#else
+		if(inet_pton(AF_INET, "127.0.0.1", &serverInf.sin_addr) != 1) {
+			std::cout << "Unable to parse loopback address." << std::endl;
+			SetConnectionErrorFlag();
+			return;
+		}
+	#endif
+
+	if(::bind(_socket, (SOCKADDR*)(&serverInf), sizeof(serverInf)) == SOCKET_ERROR) {
+		std::cout << "Unable to bind loopback socket." << std::endl;
+		SetConnectionErrorFlag();
+	}
+}
+
 bool Socket::Connect(const char* hostname, uint16_t port)
 {
 	// Resolve IP address for hostname

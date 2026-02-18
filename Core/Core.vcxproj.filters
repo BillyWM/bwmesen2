@@ -4,6 +4,21 @@
     <None Include="Core.ruleset" />
     <ClCompile Include="pch.cpp" />
     <ClInclude Include="pch.h" />
+    <ClCompile Include="TraceStreamer\TraceStreamer.cpp">
+      <Filter>TraceStreamer</Filter>
+    </ClCompile>
+    <ClCompile Include="TraceStreamer\TraceStreamerConnection.cpp">
+      <Filter>TraceStreamer</Filter>
+    </ClCompile>
+    <ClInclude Include="TraceStreamer\TraceStreamer.h">
+      <Filter>TraceStreamer</Filter>
+    </ClInclude>
+    <ClInclude Include="TraceStreamer\TraceStreamerConnection.h">
+      <Filter>TraceStreamer</Filter>
+    </ClInclude>
+    <ClInclude Include="TraceStreamer\TraceStreamerProtocol.h">
+      <Filter>TraceStreamer</Filter>
+    </ClInclude>
     <ClCompile Include="Debugger\BaseEventManager.cpp">
       <Filter>Debugger</Filter>
     </ClCompile>
@@ -1470,6 +1485,9 @@
     </Filter>
     <Filter Include="Netplay">
       <UniqueIdentifier>f019118e-e7fc-4f0f-81d4-6ca4cee63758</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TraceStreamer">
+      <UniqueIdentifier>c5f9c8a6-9f57-4d3b-9f01-79a5d9a4ed6b</UniqueIdentifier>
     </Filter>
     <Filter Include="Shared">
       <UniqueIdentifier>994ec2b2-8e0b-4442-bdfc-0ba6a6020934</UniqueIdentifier>

@@ -14,6 +14,7 @@
 #include "Core/Shared/DebuggerRequest.h"
 #include "Core/Netplay/GameClient.h"
 #include "Core/Netplay/GameServer.h"
+#include "Core/TraceStreamer/TraceStreamer.h"
 #include "Utilities/ArchiveReader.h"
 #include "Utilities/FolderUtilities.h"
 #include "Utilities/StringUtilities.h"
@@ -42,6 +43,7 @@ unique_ptr<IAudioDevice> _soundManager;
 unique_ptr<IKeyManager> _keyManager;
 unique_ptr<IMouseManager> _mouseManager;
 unique_ptr<Emulator> _emu(new Emulator());
+unique_ptr<TraceStreamer> _traceStreamer;
 bool _softwareRenderer = false;
 
 static void* _windowHandle = nullptr;
@@ -75,6 +77,11 @@ extern "C" {
 	{
 		_emu->Initialize();
 		KeyManager::SetSettings(_emu->GetSettings());
+
+		// Temporary v1 behavior: start TraceStreamer automatically.
+		// (Later, this will be controlled by a dedicated UI toggle/window.)
+		_traceStreamer.reset(new TraceStreamer(_emu.get()));
+		_traceStreamer->StartAuto();
 	}
 
 	DllExport void __stdcall InitializeEmu(const char* homeFolder, void *windowHandle, void *viewerHandle, bool softwareRenderer, bool noAudio, bool noVideo, bool noInput)
@@ -221,6 +228,11 @@ extern "C" {
 
 	DllExport void __stdcall Release()
 	{
+		if(_traceStreamer) {
+			_traceStreamer->Stop();
+			_traceStreamer.reset();
+		}
+
 		if(_emu) {
 			_emu->Stop(true);
 			_emu->Release();

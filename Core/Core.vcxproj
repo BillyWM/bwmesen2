@@ -802,12 +802,17 @@
     <ClInclude Include="WS\WsSerial.h" />
     <ClInclude Include="WS\WsTimer.h" />
     <ClInclude Include="WS\WsTypes.h" />
+    <ClInclude Include="TraceStreamer\TraceStreamer.h" />
+    <ClInclude Include="TraceStreamer\TraceStreamerConnection.h" />
+    <ClInclude Include="TraceStreamer\TraceStreamerProtocol.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Debugger\Base6502Assembler.cpp" />
     <ClCompile Include="Debugger\BaseEventManager.cpp" />
     <ClCompile Include="Debugger\CdlManager.cpp" />
     <ClCompile Include="Debugger\DisassemblySearch.cpp" />
+    <ClCompile Include="TraceStreamer\TraceStreamer.cpp" />
+    <ClCompile Include="TraceStreamer\TraceStreamerConnection.cpp" />
     <ClCompile Include="Debugger\ExpressionEvaluator.St018.cpp" />
     <ClCompile Include="Debugger\ExpressionEvaluator.Ws.cpp" />
     <ClCompile Include="Debugger\ExpressionEvaluator.Cx4.cpp" />

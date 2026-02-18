@@ -25,6 +25,7 @@ public:
 	bool ConnectionError();
 
 	void Bind(uint16_t port);
+	void BindLoopback(uint16_t port);
 	bool Connect(const char* hostname, uint16_t port);
 	void Listen(int backlog);
 	unique_ptr<Socket> Accept();

@@ -222,6 +222,12 @@ public:
 	virtual void SaveBattery();
 
 	NesRomInfo GetRomInfo();
+
+	// TraceStreamer / tooling helpers (effective sizes after header/db/heuristics)
+	uint32_t GetEffectiveWorkRamSize() const { return _workRamSize; }
+	uint32_t GetEffectiveSaveRamSize() const { return _saveRamSize; }
+	uint32_t GetEffectiveChrRamSize() const { return _chrRamSize; }
+	uint32_t GetEffectiveSaveChrRamSize() const { return _hasChrBattery ? _chrRamSize : 0; }
 	uint32_t GetMapperDipSwitchCount();
 
 	uint8_t ReadRam(uint16_t addr) override;
