@@ -211,6 +211,21 @@ bool TraceStreamerConnection::SendInfo()
 	return snap.HasGame;
 }
 
+void TraceStreamerConnection::SendInfoUpdate(bool sendSync, uint8_t syncReason)
+{
+	if(!_handshakeComplete) {
+		return;
+	}
+	if(!_socket || _socket->ConnectionError()) {
+		return;
+	}
+
+	bool hasGame = SendInfo();
+	if(sendSync && hasGame) {
+		SendSync(syncReason);
+	}
+}
+
 void TraceStreamerConnection::SendSync(uint8_t reason)
 {
 	SyncSnapshot snap = GetSyncSnapshot(_emu);

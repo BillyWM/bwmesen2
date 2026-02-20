@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+class INotificationListener;
+class TraceStreamerNotificationListener;
 class Emulator;
 class Socket;
 class TraceStreamerConnection;
@@ -9,13 +11,21 @@ class TraceStreamerConnection;
 class TraceStreamer
 {
 private:
+	friend class TraceStreamerNotificationListener;
 	Emulator* _emu = nullptr;
 	unique_ptr<Socket> _listener;
 	unique_ptr<TraceStreamerConnection> _conn;
 	unique_ptr<thread> _thread;
 	atomic<bool> _stop = false;
 	atomic<bool> _listening = false;
+	atomic<bool> _pendingInfo = false;
+	atomic<bool> _pendingSync = false;
+	atomic<uint8_t> _pendingSyncReason = 0;
 	uint16_t _port = 0;
+	shared_ptr<INotificationListener> _notifListener;
+
+	void RegisterNotificationListener();
+	void RequestInfoAndMaybeSync(bool sendSync, uint8_t syncReason);
 
 	void Exec();
 	bool TryBindListener();

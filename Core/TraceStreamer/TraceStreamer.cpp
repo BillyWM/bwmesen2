@@ -2,8 +2,11 @@
 
 #include "TraceStreamer.h"
 #include "TraceStreamerConnection.h"
+#include "TraceStreamerProtocol.h"
 
 #include "Shared/Emulator.h"
+#include "Shared/NotificationManager.h"
+#include "Shared/Interfaces/INotificationListener.h"
 #include "Utilities/Socket.h"
 
 using namespace std;
@@ -13,6 +16,38 @@ namespace
 	static constexpr uint16_t kTraceStreamerPortStart = 63783;
 	static constexpr int kTraceStreamerPortAttempts = 10;
 }
+
+class TraceStreamerNotificationListener : public INotificationListener
+{
+private:
+	TraceStreamer* _owner = nullptr;
+
+public:
+	TraceStreamerNotificationListener(TraceStreamer* owner) : _owner(owner) {}
+
+	void ProcessNotification(ConsoleNotificationType type, void* parameter) override
+	{
+		(void)parameter;
+		if(!_owner) {
+			return;
+		}
+
+		switch(type) {
+			case ConsoleNotificationType::GameLoaded:
+				// Always send INFO; and send SYNC(Initial) to establish a baseline.
+				_owner->RequestInfoAndMaybeSync(true, (uint8_t)TraceStreamerProtocol::SyncReason::Initial);
+				break;
+
+			case ConsoleNotificationType::EmulationStopped:
+				// Send INFO (hasGame=0). Do not send SYNC.
+				_owner->RequestInfoAndMaybeSync(false, 0);
+				break;
+
+			default:
+				break;
+		}
+	}
+};
 
 TraceStreamer::TraceStreamer(Emulator* emu)
 {
@@ -35,6 +70,8 @@ void TraceStreamer::StartAuto()
 		return;
 	}
 
+	RegisterNotificationListener();
+
 	_stop = false;
 	_thread.reset(new thread(&TraceStreamer::Exec, this));
 }
@@ -50,8 +87,34 @@ void TraceStreamer::Stop()
 
 	_conn.reset();
 	_listener.reset();
+	_notifListener.reset();
 	_listening = false;
 	_port = 0;
+}
+
+void TraceStreamer::RegisterNotificationListener()
+{
+	if(_notifListener) {
+		return;
+	}
+	if(!_emu) {
+		return;
+	}
+
+	// Subscribe to emulator notifications so we can push INFO/SYNC when a ROM is loaded/unloaded.
+	// NotificationManager stores listeners as weak_ptr; we keep the shared_ptr alive here.
+	_notifListener = make_shared<TraceStreamerNotificationListener>(this);
+	NotificationManager* nm = _emu->GetNotificationManager();
+	if(nm) {
+		nm->RegisterNotificationListener(_notifListener);
+	}
+}
+
+void TraceStreamer::RequestInfoAndMaybeSync(bool sendSync, uint8_t syncReason)
+{
+	_pendingInfo.store(true);
+	_pendingSync.store(sendSync);
+	_pendingSyncReason.store(syncReason);
 }
 
 bool TraceStreamer::TryBindListener()
@@ -125,6 +188,17 @@ void TraceStreamer::Exec()
 			_conn->Poll();
 			if(_conn->ConnectionError()) {
 				_conn.reset();
+			}
+		}
+
+		// If a client is connected and handshook, push INFO (and optional SYNC) when requested
+		// by emulator notifications (GameLoaded / EmulationStopped).
+		if(_conn && _conn->HandshakeComplete()) {
+			bool doInfo = _pendingInfo.exchange(false);
+			bool doSync = _pendingSync.exchange(false);
+			uint8_t reason = _pendingSyncReason.load();
+			if(doInfo) {
+				_conn->SendInfoUpdate(doSync, reason);
 			}
 		}
 

@@ -31,6 +31,9 @@ public:
 	bool ConnectionError() const;
 	bool HandshakeComplete() const { return _handshakeComplete; }
 
+	// Send an INFO update to the client. Optionally follows with SYNC if a game is loaded.
+	void SendInfoUpdate(bool sendSync, uint8_t syncReason);
+
 	// Pump socket IO + handle messages. Safe to call frequently.
 	void Poll();
 };
